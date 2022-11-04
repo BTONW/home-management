@@ -20,7 +20,7 @@ const Layout: FC<Props> = ({ children, breadcrumbs }) => {
     }}>
       <Header />
       <Container
-        maxWidth='lg'
+        maxWidth='xl'
         sx={{ py: 3 }}
       >
         {breadcrumbs &&

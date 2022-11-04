@@ -24,3 +24,15 @@ a {
     background: black;
   }
 }
+
+.text-center {
+  text-align: center;
+}
+
+/* bg colors */
+
+
+/* DataGrid */
+.grid-head-center {
+  justify-content: center;
+}

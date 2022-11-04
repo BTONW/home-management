@@ -6,6 +6,7 @@ import { LocalizationProvider, MobileDatePicker, CalendarPickerView } from '@mui
 
 interface Props {
   label?: string
+  disabled?: boolean
   inputFormat?: string
   value?: Moment | null
   onChange?: (date: Moment | null) => void
@@ -18,8 +19,9 @@ const DatePicker: FC<Props> = ({
   inputProps,
   value = null,
   label = 'Date Time',
-  inputFormat = 'DD/MM/YYYY',
-  views = ['year', 'month']
+  inputFormat = 'DD / MMM / YYYY',
+  views = ['year', 'month', 'day'],
+  disabled
 }) => {
   return (
     <LocalizationProvider dateAdapter={AdapterMoment}>
@@ -27,6 +29,7 @@ const DatePicker: FC<Props> = ({
         value={value}
         label={label}
         views={views}
+        disabled={disabled}
         onChange={date => {
           if (onChange) {
             onChange(date)
