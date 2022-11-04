@@ -21,6 +21,7 @@
       "@hm-utils/*": ["src/utils/*"],
       "@hm-stores/*": ["src/stores/*"],
       "@hm-modules/*": ["src/modules/*"],
+      "@hm-services/*": ["src/services/*"],
       "@hm-components/*": ["src/components/*"],
     }
   },

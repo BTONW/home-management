@@ -9,8 +9,10 @@ import { FC } from 'react'
 import Layout from '@hm-components/Layout'
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
+  const { breadcrumbs } = pageProps
+
   return (
-    <Layout>
+    <Layout breadcrumbs={breadcrumbs}>
       <Component {...pageProps} />
     </Layout>
   )

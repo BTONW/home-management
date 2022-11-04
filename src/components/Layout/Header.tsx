@@ -98,7 +98,7 @@ const LayoutHeader: FC = () => {
           </List>
         </Box>
       </Drawer>
-      <AppBar position='static'>
+      <AppBar position='sticky'>
         <Container maxWidth='xl'>
           <Toolbar
             disableGutters

@@ -1,14 +1,31 @@
-import { FC } from 'react'
-import { Grid } from '@mui/material'
+import { FC, useState } from 'react'
+import { Grid, Paper } from '@mui/material'
+import moment, { Moment } from 'moment'
+import DatePicker from '@hm-components/DatePicker/Mobile'
 
-const Dashboard: FC = () => {
+interface FormState {
+  date: Moment | null
+}
+
+const _initForm: FormState = {
+  date: moment()
+}
+
+const Weekdays: FC = (props) => {
+  const [form, setForm] = useState({ ..._initForm })
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={12} sm={6} md={4}>
-        Weekdays
-      </Grid>
-    </Grid>
+    <>
+      <Paper elevation={2} sx={{ p: 2 }}>
+        <DatePicker
+          value={form.date}
+          onChange={date => setForm({ ...form, date })}
+          inputProps={{
+            
+          }}
+        />
+      </Paper>
+    </>
   )
 }
 
-export default Dashboard
+export default Weekdays
