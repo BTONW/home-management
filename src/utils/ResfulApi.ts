@@ -48,24 +48,24 @@ class ResfulApi {
     }
   })
 
-  protected apiGet = (url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected apiGet = <T>(url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.api.get(url, option)
-  protected apiPost = (url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected apiPost = <T>(url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.api.post(url, params, option)
-  protected apiPut = (url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected apiPut = <T>(url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.api.put(url, params, option)
-  protected apiPatch = (url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected apiPatch = <T>(url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.api.patch(url, params, option)
-  protected apiDel = (url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected apiDel = <T>(url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.api.delete(url, option)
 
-  protected appGet = (url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected appGet = <T>(url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.app.get(url, option)
-  protected appPost = (url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected appPost = <T>(url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.app.post(url, params, option)
-  protected appPut = (url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected appPut = <T>(url: string, params?: any, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.app.put(url, params, option)
-  protected appDelete = (url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse> =>
+  protected appDelete = <T>(url: string, option?: AxiosRequestConfig): Promise<ResfulApiResponse<T>> =>
     this.app.delete(url, option)
 }
 

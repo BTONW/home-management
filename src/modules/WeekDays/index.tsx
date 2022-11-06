@@ -1,82 +1,102 @@
-import { FC, useState, useEffect } from 'react'
-import { Grid, Stack, Paper, Divider } from '@mui/material'
+import dynamic from 'next/dynamic'
 import moment, { Moment } from 'moment'
+import { FC, useState } from 'react'
+import { Grid, Stack, Paper, Divider } from '@mui/material'
+
+import { BodyCostValues } from '@hm-dto/services.dto'
 import { DataGridColumn } from '@hm-dto/components.dto'
-import DataGrid from '@hm-components/DataGrid'
+
 import DatePicker from '@hm-components/DatePicker/Mobile'
+
+const DataGrid = dynamic(() => import('@hm-components/DataGrid'), { ssr: false })
+
+// -----------------------
+
+interface ListColumn {
+  Mon: DataGridColumn[]
+  Tue: DataGridColumn[]
+  Wed: DataGridColumn[]
+  Thu: DataGridColumn[]
+  Fri: DataGridColumn[]
+}
 
 interface FormState {
   date: Moment | null
 }
 
+interface Props {
+  products: BodyCostValues[]
+}
+
+// -----------------------
+
 const _initForm: FormState = {
   date: moment()
 }
 
-const Weekdays: FC = (props) => {
+const Weekdays: FC<Props> = (props) => {
   const [form, setForm] = useState({ ..._initForm })
 
   const children: DataGridColumn[] = [
     {
       show: true,
-      width: 150,
       field: 'Date',
       headerClassName: 'grid-head-center',
       title: 'Date'
     },
     {
       show: true,
-      width: 150,
       field: 'Product',
       headerClassName: 'grid-head-center',
       title: 'Product'
     },
     {
       show: true,
-      width: 150,
       field: 'Price',
       headerClassName: 'grid-head-center',
       title: 'Price'
     },
   ]
 
-  const columns: DataGridColumn[] = [
-    {
+  const columns: ListColumn = {
+    Mon: [{
       show: true,
       field: 'Monday',
       title: 'Monday',
       headerClassName: 'grid-head-center',
       children
-    },
-    {
+    }],
+    Tue: [{
       show: true,
       field: 'Tuesday',
       title: 'Tuesday',
       headerClassName: 'grid-head-center',
       children
-    },
-    {
+    }],
+    Wed: [{
       show: true,
       field: 'Wednesday',
       title: 'Wednesday',
       headerClassName: 'grid-head-center',
       children
-    },
-    {
+    }],
+    Thu: [{
       show: true,
       field: 'Thursday',
       title: 'Thursday',
       headerClassName: 'grid-head-center',
       children
-    },
-    {
+    }],
+    Fri: [{
       show: true,
       field: 'Friday',
       title: 'Friday',
       headerClassName: 'grid-head-center',
       children
-    },
-  ]
+    }]
+  }
+
+  console.log(props)
 
   return (
     <>
@@ -88,8 +108,8 @@ const Weekdays: FC = (props) => {
         >
           <Paper elevation={0} sx={{ width: '23%' }}>
             <DatePicker
-              disabled
               value={form.date}
+              maxDate={moment()}
               onChange={date => setForm({ ...form, date })}
               inputProps={{
                 fullWidth: true
@@ -108,11 +128,19 @@ const Weekdays: FC = (props) => {
           </Paper>
         </Stack>
       </Paper>
-      <Paper elevation={2} sx={{ overflow: 'auto' }}>
-        <DataGrid
-          rows={[]}
-          columns={columns}
-        />
+      <Paper elevation={2} sx={{ overflow: 'auto', p: 2 }}>
+        <Grid container spacing={2}>
+          {
+            Object.keys(columns).map(key => (
+              <Grid key={key} item xs={12} sm={6} md={4} >
+                <DataGrid
+                  rows={[]}
+                  columns={columns[key as keyof ListColumn]}
+                />
+              </Grid>
+            ))
+          }
+        </Grid>
       </Paper>
     </>
   )

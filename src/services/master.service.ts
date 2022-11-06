@@ -8,6 +8,9 @@ class Service extends ResfulApi {
 
   getMonths = (option?: AxiosRequestConfig) =>
     this.apiGet('/months', option)
+
+  getBudgets = (option?: AxiosRequestConfig) =>
+    this.apiGet('/budgets', option)
 }
 
 export const masterService = new Service()

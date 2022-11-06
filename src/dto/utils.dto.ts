@@ -1,3 +1,8 @@
+export enum BitStatus {
+  TRUE = '1',
+  FALSE = '0'
+}
+
 export enum HttpStatus {
   OK           = 200,
   NO_CONTENT   = 204,

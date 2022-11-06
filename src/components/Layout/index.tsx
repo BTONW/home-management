@@ -1,15 +1,15 @@
 import { FC, ReactNode } from 'react'
 import { Box, Container, Breadcrumbs, Typography, Link } from '@mui/material'
-import NextLink from 'next/link'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
+import NextLink from 'next/link'
+
+import { BreadCrumbs as BreadCrumbsDto } from '@hm-dto/components.dto'
+
 import Header from './Header'
 
 interface Props {
   children?: ReactNode
-  breadcrumbs?: {
-    text: string
-    path?: string
-  }[]
+  breadcrumbs?: BreadCrumbsDto[]
 }
 
 const Layout: FC<Props> = ({ children, breadcrumbs }) => {
