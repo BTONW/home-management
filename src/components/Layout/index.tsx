@@ -16,7 +16,8 @@ const Layout: FC<Props> = ({ children, breadcrumbs }) => {
   return (
     <Box sx={{
       height: '100vh',
-      bgcolor: '#ECECEC'
+      bgcolor: '#ECECEC',
+      overflow: 'auto'
     }}>
       <Header />
       <Container
