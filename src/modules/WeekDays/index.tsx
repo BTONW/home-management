@@ -39,13 +39,13 @@ interface ListColumn {
 }
 
 interface ListRow {
-  Mon?: any[]
-  Tue?: any[]
-  Wed?: any[]
-  Thu?: any[]
-  Fri?: any[]
-  Sat?: any[]
-  Sun?: any[]
+  Mon: any[]
+  Tue: any[]
+  Wed: any[]
+  Thu: any[]
+  Fri: any[]
+  Sat: any[]
+  Sun: any[]
 }
 
 interface CriteriaSearch {
@@ -71,6 +71,16 @@ interface Props {
 
 // -----------------------
 
+const _initRows: ListRow = {
+  Mon: [],
+  Tue: [],
+  Wed: [],
+  Thu: [],
+  Fri: [],
+  Sat: [],
+  Sun: [],
+}
+
 const _initForm: FormState = {
   date: moment(),
   productGrabId: 3,
@@ -85,14 +95,14 @@ const _initForm: FormState = {
 const Weekdays: FC<Props> = ({ budgets, products }) => {
   const [form, setForm] = useState({ ..._initForm })
   const [isLoading, setIsLoading] = useState(false)
-  const [rows, setRows] = useState<ListRow>({})
   const [columns, setColumns] = useState<ListColumn>({})
+  const [rows, setRows] = useState<ListRow>({ ..._initRows })
+  const [lastFridayRows, setLastFridayRows] = useState<any[]>([])
 
   const children: DataGridColumn[] = [
     {
       show: true,
       field: 'Product',
-      className: 'text-center',
       headerClassName: 'grid-head-center',
       title: 'Product'
     },
@@ -109,57 +119,69 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
   // handerler -------------------------
 
   const handleSetRows = (listRows: ListRow): ListRow => {
-    return {
-      [BudgetCode.MON]: [
+    const _rows: ListRow = { ..._initRows }
+    
+    // List Product & Total
+    Object.keys(_rows).forEach((key) => {
+      const rowKey = key as keyof ListRow
+
+      _rows[rowKey] = [
+        ...listRows[rowKey],
         {
-          Product: 'Budget',
-          Price: budgets.find(budget => budget.code === BudgetCode.MON)?.budget_amount || 0
-        },
-        ...(listRows[BudgetCode.MON] || []) 
-      ],
-      [BudgetCode.TUE]: [
-        {
-          Product: 'Budget',
-          Price: budgets.find(budget => budget.code === BudgetCode.TUE)?.budget_amount || 0
-        },
-        ...(listRows[BudgetCode.TUE] || []) 
-      ],
-      [BudgetCode.WED]: [
-        {
-          Product: 'Budget',
-          Price: budgets.find(budget => budget.code === BudgetCode.WED)?.budget_amount || 0
-        },
-        ...(listRows[BudgetCode.WED] || []) 
-      ],
-      [BudgetCode.THU]: [
-        {
-          Product: 'Budget',
-          Price: budgets.find(budget => budget.code === BudgetCode.THU)?.budget_amount || 0
-        },
-        ...(listRows[BudgetCode.THU] || []) 
-      ],
-      [BudgetCode.FRI]: [
-        {
-          Product: 'Budget',
-          Price: budgets.find(budget => budget.code === BudgetCode.FRI)?.budget_amount || 0
-        },
-        ...(listRows[BudgetCode.FRI] || []) 
-      ],
-      [BudgetCode.SAT]: [
-        {
-          Product: 'Budget',
-          Price: budgets.find(budget => budget.code === BudgetCode.SAT)?.budget_amount || 0
-        },
-        ...(listRows[BudgetCode.SAT] || []) 
-      ],
-      [BudgetCode.SUN]: [
-        {
-          Product: 'Budget',
-          Price: budgets.find(budget => budget.code === BudgetCode.SUN)?.budget_amount || 0
-        },
-        ...(listRows[BudgetCode.SUN] || []) 
+          Product: 'Total',
+          isTotal: true,
+          Price: (listRows[rowKey]).reduce((value, row) => value + row.Price, 0)
+        }
       ]
-    }
+    })
+
+    // Cost of Living
+    Object.keys(_rows).forEach((key) => {
+      const rowKey = key as keyof ListRow
+
+      switch (rowKey) {
+        case BudgetCode.SAT: {
+          const costOfLiving = budgets.find(budget => budget.code === rowKey)?.budget_amount || 0
+          const total = _rows[rowKey].find(row => row.isTotal).Price || 0
+          _rows[rowKey] = [
+            {
+              Product: 'Cost of living',
+              Price: costOfLiving
+            },
+            ..._rows[rowKey],
+            {
+              Product: 'Balance',
+              isBalance: true,
+              Price: costOfLiving - total,
+            },
+          ]
+          break
+        }
+        case BudgetCode.SUN: {
+          const costOfLiving = budgets.find(budget => budget.code === rowKey)?.budget_amount || 0
+          const total = _rows[rowKey].find(row => row.isTotal).Price || 0
+          const yesterdayCostOfLiving = budgets.find(budget => budget.code === BudgetCode.SAT)?.budget_amount || 0
+          const yesterdayTotal = _rows[BudgetCode.SAT].find(row => row.isTotal).Price || 0
+          const yesterdayBalance = yesterdayCostOfLiving - yesterdayTotal
+          _rows[rowKey] = [
+            {
+              Product: 'Cost of living',
+              Price: costOfLiving + yesterdayBalance
+            },
+            ..._rows[rowKey],
+            {
+              Product: 'Balance',
+              Price: (costOfLiving + yesterdayBalance) - total
+            },
+          ]
+          break
+        }
+      }
+
+      
+    })
+
+    return _rows
   }
 
   const handleSetColumns = (): ListColumn => {
@@ -407,79 +429,113 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
     switch (date?.format('ddd')) {
       case BudgetCode.MON:
         criteria.dates = [
+          moment(date).subtract(3, 'day').format(format),
           moment(date).format(format),
           moment(date).add(1, 'day').format(format),
           moment(date).add(2, 'day').format(format),
           moment(date).add(3, 'day').format(format),
           moment(date).add(4, 'day').format(format),
-          moment(date).add(5, 'day').format(format),
-          moment(date).add(6, 'day').format(format),
         ]
         break
       case BudgetCode.TUE:
         criteria.dates = [
+          moment(date).subtract(4, 'day').format(format),
           moment(date).subtract(1, 'day').format(format),
           moment(date).format(format),
           moment(date).add(1, 'day').format(format),
           moment(date).add(2, 'day').format(format),
           moment(date).add(3, 'day').format(format),
-          moment(date).add(4, 'day').format(format),
-          moment(date).add(5, 'day').format(format),
         ]
         break
       case BudgetCode.WED:
         criteria.dates = [
+          moment(date).subtract(5, 'day').format(format),
           moment(date).subtract(2, 'day').format(format),
           moment(date).subtract(1, 'day').format(format),
           moment(date).format(format),
           moment(date).add(1, 'day').format(format),
           moment(date).add(2, 'day').format(format),
-          moment(date).add(3, 'day').format(format),
-          moment(date).add(4, 'day').format(format),
         ]
         break
       case BudgetCode.THU:
         criteria.dates = [
+          moment(date).subtract(6, 'day').format(format),
           moment(date).subtract(3, 'day').format(format),
           moment(date).subtract(2, 'day').format(format),
           moment(date).subtract(1, 'day').format(format),
           moment(date).format(format),
           moment(date).add(1, 'day').format(format),
-          moment(date).add(2, 'day').format(format),
-          moment(date).add(3, 'day').format(format),
         ]
         break
       case BudgetCode.FRI:
         criteria.dates = [
+          moment(date).subtract(7, 'day').format(format),
           moment(date).subtract(4, 'day').format(format),
           moment(date).subtract(3, 'day').format(format),
           moment(date).subtract(2, 'day').format(format),
           moment(date).subtract(1, 'day').format(format),
           moment(date).format(format),
-          moment(date).add(1, 'day').format(format),
-          moment(date).add(2, 'day').format(format),
         ]
         break
       case BudgetCode.SAT:
         criteria.dates = [
-          moment(date).subtract(5, 'day').format(format),
-          moment(date).subtract(4, 'day').format(format),
-          moment(date).subtract(3, 'day').format(format),
-          moment(date).subtract(2, 'day').format(format),
-          moment(date).subtract(1, 'day').format(format),
           moment(date).format(format),
           moment(date).add(1, 'day').format(format),
         ]
         break
       case BudgetCode.SUN:
         criteria.dates = [
-          moment(date).subtract(6, 'day').format(format),
-          moment(date).subtract(5, 'day').format(format),
-          moment(date).subtract(4, 'day').format(format),
-          moment(date).subtract(3, 'day').format(format),
-          moment(date).subtract(2, 'day').format(format),
           moment(date).subtract(1, 'day').format(format),
           moment(date).format(format),
+        ]
+        break
+    }
+
+    return criteria
+  }
+
+  const handleSetCriteriaLastFriday = (): CriteriaSearch => {
+    const date = moment(form.date)
+    const format = 'YYYY-MM-DD'
+    const criteria: CriteriaSearch = {
+      dates: [],
+      payments: ['Credit']
+    }
+
+    switch (date?.format('ddd')) {
+      case BudgetCode.MON:
+        criteria.dates = [
+          moment(date).subtract(3, 'day').format(format),
+        ]
+        break
+      case BudgetCode.TUE:
+        criteria.dates = [
+          moment(date).subtract(4, 'day').format(format),
+        ]
+        break
+      case BudgetCode.WED:
+        criteria.dates = [
+          moment(date).subtract(5, 'day').format(format),
+        ]
+        break
+      case BudgetCode.THU:
+        criteria.dates = [
+          moment(date).subtract(6, 'day').format(format),
+        ]
+        break
+      case BudgetCode.FRI:
+        criteria.dates = [
+          moment(date).subtract(7, 'day').format(format),
+        ]
+        break
+      case BudgetCode.SAT:
+        criteria.dates = [
+          moment(date).subtract(1, 'day').format(format),
+        ]
+        break
+      case BudgetCode.SUN:
+        criteria.dates = [
+          moment(date).subtract(2, 'day').format(format),
         ]
         break
     }
@@ -490,12 +546,22 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
   const handleSearchCostValue = async () => {
     setIsLoading(true)
     try {
-      const { body } = await costValueService.getCostValuesByDays<ListRow>({
-        params: handleSetCriteria()
-      })
-      setRows(handleSetRows(body))
+      const [
+        { body: bodyDays },
+        { body: bodyDay },
+      ] = await Promise.all([
+        costValueService.getCostValuesByDays<ListRow>({
+          params: handleSetCriteria()
+        }),
+        costValueService.getCostValues<any[]>({
+          params: handleSetCriteriaLastFriday()
+        })
+      ])
+      setRows(handleSetRows(bodyDays))
+      setLastFridayRows(bodyDay)
     } catch (err) {
-      setRows(handleSetRows({}))
+      setRows({ ..._initRows })
+      setLastFridayRows([])
     }
     setColumns(handleSetColumns())
     setIsLoading(false)

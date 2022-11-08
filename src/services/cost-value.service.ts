@@ -6,6 +6,8 @@ class Service extends ResfulApi {
     super('/cost-value')
   }
 
+  getCostValues = <T>(option?: AxiosRequestConfig) => this.apiGet<T>('/', option)
+
   getCostValuesByDays = <T>(option?: AxiosRequestConfig) => this.apiGet<T>('/days', option)
   
 }

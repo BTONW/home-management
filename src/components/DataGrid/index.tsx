@@ -13,8 +13,6 @@ const DataGrid: FC<Props> = ({
   rows,
   columns
 }) => {
-  // const [rows, setRows] = useState()
-
   return (
     <Grid
       resizable
