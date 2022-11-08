@@ -1,8 +1,8 @@
-import { FC } from 'react'
+import { FC, useState } from 'react'
 import { Moment } from 'moment'
 import { TextField, TextFieldProps } from '@mui/material'
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'
-import { LocalizationProvider, MobileDatePicker, MobileDatePickerProps, CalendarPickerView } from '@mui/x-date-pickers'
+import { LocalizationProvider, MobileDatePicker, CalendarPickerView } from '@mui/x-date-pickers'
 
 interface Props {
   label?: string
@@ -18,22 +18,25 @@ interface Props {
 const DatePicker: FC<Props> = ({
   onChange,
   maxDate,
+  disabled,
   inputProps,
   value = null,
   label = 'Date Time',
   inputFormat = 'DD / MMM / YYYY',
   views = ['year', 'month', 'day'],
-  disabled
 }) => {
+  const [date, setDate] = useState(value)
+
   return (
     <LocalizationProvider dateAdapter={AdapterMoment}>
       <MobileDatePicker
-        value={value}
+        value={date}
         label={label}
         views={views}
         maxDate={maxDate}
+        onChange={setDate}
         disabled={disabled}
-        onChange={date => {
+        onAccept={() => {
           if (onChange) {
             onChange(date)
           }

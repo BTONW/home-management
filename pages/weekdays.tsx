@@ -1,30 +1,42 @@
 import { FC } from 'react'
 
-import { productService } from '@hm-services/service'
+import { productService, masterService } from '@hm-services/service'
 
-import { BodyProducts } from '@hm-dto/services.dto'
+import { BodyProducts, BodyBudgets } from '@hm-dto/services.dto'
 import { BreadCrumbs as BreadCrumbsDto } from '@hm-dto/components.dto'
 
 import Module from '@hm-modules/WeekDays'
 
 interface Props {
+  resBudgets: BodyBudgets[]
   resProduct: BodyProducts[]
   breadcrumbs: BreadCrumbsDto[]
 }
 
-const Page: FC<Props> = ({ resProduct }) => (
-  <Module products={resProduct} />
+const Page: FC<Props> = ({ resProduct, resBudgets }) => (
+  <Module
+    budgets={resBudgets}
+    products={resProduct}
+  />
 )
 
 export const getStaticProps = async () => {
-  const { body } = await productService.getProducts()
+  const [
+    { body: resProduct },
+    { body: resBudgets }
+  ] = await Promise.all([
+    productService.getProducts(),
+    masterService.getBudgets()
+  ])
+
   return {
     props: {
       breadcrumbs: [
         { text: 'Home', path: '/' },
         { text: 'Weekdays' }
       ],
-      resProduct: body
+      resBudgets,
+      resProduct
     }
   }
 }

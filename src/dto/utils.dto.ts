@@ -13,6 +13,16 @@ export enum HttpStatus {
   SERVER_ERROR = 500,
 }
 
+export enum BudgetCode {
+  MON = 'Mon',
+  TUE = 'Tue',
+  WED = 'Wed',
+  THU = 'Thu',
+  FRI = 'Fri',
+  SAT = 'Sat',
+  SUN = 'Sun'
+}
+
 export interface ResfulApiResponse<T = any> {
   body: T
   success: boolean

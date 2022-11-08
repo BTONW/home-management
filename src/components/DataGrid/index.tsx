@@ -10,13 +10,15 @@ interface Props  {
 
 const DataGrid: FC<Props> = ({
   config = {},
+  rows,
   columns
 }) => {
-  const [rows, setRows] = useState()
+  // const [rows, setRows] = useState()
 
   return (
     <Grid
       resizable
+      data={rows}
       {...config}
     >
       {

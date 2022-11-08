@@ -1,13 +1,11 @@
-import { BitStatus } from './utils.dto'
+import { BitStatus, BudgetCode } from './utils.dto'
 
 export interface BodyCostValues {
   id: number
-  name: string
-  image: string
   is_active: BitStatus
-  is_regular: BitStatus
   created_at: string
   updated_at: string
+  cost_amount: number
 }
 
 export interface BodyProducts {
@@ -20,4 +18,13 @@ export interface BodyProducts {
   updated_at: string
 
   cost_values?: BodyCostValues[]
+}
+
+export interface BodyBudgets {
+  id: number
+  code: BudgetCode
+  created_at: string
+  updated_at: string
+  is_active: BitStatus
+  budget_amount: number
 }

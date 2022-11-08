@@ -28,11 +28,25 @@ a {
 .text-center {
   text-align: center;
 }
+.text-right {
+  text-align: right;
+}
 
 /* bg colors */
 
 
 /* DataGrid */
+.k-grid th.text-center, .k-grid td.text-center {
+  text-align: center;
+}
+.k-grid th.text-right, .k-grid td.text-right {
+  text-align: right;
+}
+
 .grid-head-center {
   justify-content: center;
+}
+
+.grid-head-active {
+  color: #9c27b0
 }
