@@ -19,6 +19,8 @@ import { BitStatus, BudgetCode } from '@hm-dto/utils.dto'
 import { BodyProducts, BodyBudgets } from '@hm-dto/services.dto'
 import { DataGridColumn } from '@hm-dto/components.dto'
 
+import { costValueService } from '@hm-services/service'
+
 import InputCost from '@hm-components/InputCost'
 import DatePicker from '@hm-components/DatePicker/Mobile'
 
@@ -44,6 +46,11 @@ interface ListRow {
   Fri?: any[]
   Sat?: any[]
   Sun?: any[]
+}
+
+interface CriteriaSearch {
+  dates: string[]
+  payments: string[]
 }
 
 interface FormState {
@@ -77,6 +84,7 @@ const _initForm: FormState = {
 
 const Weekdays: FC<Props> = ({ budgets, products }) => {
   const [form, setForm] = useState({ ..._initForm })
+  const [isLoading, setIsLoading] = useState(false)
   const [rows, setRows] = useState<ListRow>({})
   const [columns, setColumns] = useState<ListColumn>({})
 
@@ -100,49 +108,56 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
 
   // handerler -------------------------
 
-  const handleSetRows = (): ListRow => {
+  const handleSetRows = (listRows: ListRow): ListRow => {
     return {
       [BudgetCode.MON]: [
         {
           Product: 'Budget',
           Price: budgets.find(budget => budget.code === BudgetCode.MON)?.budget_amount || 0
-        }
+        },
+        ...(listRows[BudgetCode.MON] || []) 
       ],
       [BudgetCode.TUE]: [
         {
           Product: 'Budget',
           Price: budgets.find(budget => budget.code === BudgetCode.TUE)?.budget_amount || 0
-        }
+        },
+        ...(listRows[BudgetCode.TUE] || []) 
       ],
       [BudgetCode.WED]: [
         {
           Product: 'Budget',
           Price: budgets.find(budget => budget.code === BudgetCode.WED)?.budget_amount || 0
-        }
+        },
+        ...(listRows[BudgetCode.WED] || []) 
       ],
       [BudgetCode.THU]: [
         {
           Product: 'Budget',
           Price: budgets.find(budget => budget.code === BudgetCode.THU)?.budget_amount || 0
-        }
+        },
+        ...(listRows[BudgetCode.THU] || []) 
       ],
       [BudgetCode.FRI]: [
         {
           Product: 'Budget',
           Price: budgets.find(budget => budget.code === BudgetCode.FRI)?.budget_amount || 0
-        }
+        },
+        ...(listRows[BudgetCode.FRI] || []) 
       ],
       [BudgetCode.SAT]: [
         {
           Product: 'Budget',
           Price: budgets.find(budget => budget.code === BudgetCode.SAT)?.budget_amount || 0
-        }
+        },
+        ...(listRows[BudgetCode.SAT] || []) 
       ],
       [BudgetCode.SUN]: [
         {
           Product: 'Budget',
           Price: budgets.find(budget => budget.code === BudgetCode.SUN)?.budget_amount || 0
-        }
+        },
+        ...(listRows[BudgetCode.SUN] || []) 
       ]
     }
   }
@@ -381,14 +396,118 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
     }
   }
 
+  const handleSetCriteria = (): CriteriaSearch => {
+    const date = moment(form.date)
+    const format = 'YYYY-MM-DD'
+    const criteria: CriteriaSearch = {
+      dates: [],
+      payments: ['Credit']
+    }
+
+    switch (date?.format('ddd')) {
+      case BudgetCode.MON:
+        criteria.dates = [
+          moment(date).format(format),
+          moment(date).add(1, 'day').format(format),
+          moment(date).add(2, 'day').format(format),
+          moment(date).add(3, 'day').format(format),
+          moment(date).add(4, 'day').format(format),
+          moment(date).add(5, 'day').format(format),
+          moment(date).add(6, 'day').format(format),
+        ]
+        break
+      case BudgetCode.TUE:
+        criteria.dates = [
+          moment(date).subtract(1, 'day').format(format),
+          moment(date).format(format),
+          moment(date).add(1, 'day').format(format),
+          moment(date).add(2, 'day').format(format),
+          moment(date).add(3, 'day').format(format),
+          moment(date).add(4, 'day').format(format),
+          moment(date).add(5, 'day').format(format),
+        ]
+        break
+      case BudgetCode.WED:
+        criteria.dates = [
+          moment(date).subtract(2, 'day').format(format),
+          moment(date).subtract(1, 'day').format(format),
+          moment(date).format(format),
+          moment(date).add(1, 'day').format(format),
+          moment(date).add(2, 'day').format(format),
+          moment(date).add(3, 'day').format(format),
+          moment(date).add(4, 'day').format(format),
+        ]
+        break
+      case BudgetCode.THU:
+        criteria.dates = [
+          moment(date).subtract(3, 'day').format(format),
+          moment(date).subtract(2, 'day').format(format),
+          moment(date).subtract(1, 'day').format(format),
+          moment(date).format(format),
+          moment(date).add(1, 'day').format(format),
+          moment(date).add(2, 'day').format(format),
+          moment(date).add(3, 'day').format(format),
+        ]
+        break
+      case BudgetCode.FRI:
+        criteria.dates = [
+          moment(date).subtract(4, 'day').format(format),
+          moment(date).subtract(3, 'day').format(format),
+          moment(date).subtract(2, 'day').format(format),
+          moment(date).subtract(1, 'day').format(format),
+          moment(date).format(format),
+          moment(date).add(1, 'day').format(format),
+          moment(date).add(2, 'day').format(format),
+        ]
+        break
+      case BudgetCode.SAT:
+        criteria.dates = [
+          moment(date).subtract(5, 'day').format(format),
+          moment(date).subtract(4, 'day').format(format),
+          moment(date).subtract(3, 'day').format(format),
+          moment(date).subtract(2, 'day').format(format),
+          moment(date).subtract(1, 'day').format(format),
+          moment(date).format(format),
+          moment(date).add(1, 'day').format(format),
+        ]
+        break
+      case BudgetCode.SUN:
+        criteria.dates = [
+          moment(date).subtract(6, 'day').format(format),
+          moment(date).subtract(5, 'day').format(format),
+          moment(date).subtract(4, 'day').format(format),
+          moment(date).subtract(3, 'day').format(format),
+          moment(date).subtract(2, 'day').format(format),
+          moment(date).subtract(1, 'day').format(format),
+          moment(date).format(format),
+        ]
+        break
+    }
+
+    return criteria
+  }
+
+  const handleSearchCostValue = async () => {
+    setIsLoading(true)
+    try {
+      const { body } = await costValueService.getCostValuesByDays<ListRow>({
+        params: handleSetCriteria()
+      })
+      setRows(handleSetRows(body))
+    } catch (err) {
+      setRows(handleSetRows({}))
+    }
+    setColumns(handleSetColumns())
+    setIsLoading(false)
+  }
+
   const handleSubmitCostValue = (field: string, value: string) => {
     const values = value.split(',').map(val => parseFloat(val))
     console.log(values)
   }
 
   useEffect(() => {
-    setRows(handleSetRows())
-    setColumns(handleSetColumns())
+    handleSearchCostValue()
   }, [form.date])
 
   return (
