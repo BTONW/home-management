@@ -23,6 +23,11 @@ export enum BudgetCode {
   SUN = 'Sun'
 }
 
+export enum PaymentType {
+  CASH = 'Cash',
+  CREDIT = 'Credit'
+}
+
 export interface ResfulApiResponse<T = any> {
   body: T
   success: boolean

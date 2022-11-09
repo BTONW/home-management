@@ -1,4 +1,4 @@
-import { BitStatus, BudgetCode } from './utils.dto'
+import { BitStatus, BudgetCode, PaymentType } from './utils.dto'
 
 export interface BodyCostValues {
   id: number
@@ -6,6 +6,13 @@ export interface BodyCostValues {
   created_at: string
   updated_at: string
   cost_amount: number
+}
+
+export interface BodyCreateCostValues {
+  date: string
+  product_id: number
+  cost_amount: number
+  payment: PaymentType
 }
 
 export interface BodyProducts {

@@ -1,6 +1,6 @@
 import dynamic from 'next/dynamic'
 import moment, { Moment } from 'moment'
-import { isNull } from 'lodash'
+import { isNull, isNaN } from 'lodash'
 import { FC, useState, useEffect } from 'react'
 import {
   Grid,
@@ -15,14 +15,16 @@ import {
   ListSubheader,
 } from '@mui/material'
 
-import { BitStatus, BudgetCode } from '@hm-dto/utils.dto'
-import { BodyProducts, BodyBudgets } from '@hm-dto/services.dto'
 import { DataGridColumn } from '@hm-dto/components.dto'
+import { BitStatus, BudgetCode, PaymentType } from '@hm-dto/utils.dto'
+import { BodyProducts, BodyBudgets, BodyCostValues, BodyCreateCostValues } from '@hm-dto/services.dto'
 
 import { costValueService } from '@hm-services/service'
 
 import InputCost from '@hm-components/InputCost'
 import DatePicker from '@hm-components/DatePicker/Mobile'
+import { SnackAlert } from '@hm-components/Alert'
+import { BackdropLoading } from '@hm-components/Loading'
 
 const DataGrid = dynamic(() => import('@hm-components/DataGrid'), { ssr: false })
 
@@ -94,6 +96,7 @@ const _initForm: FormState = {
 
 const Weekdays: FC<Props> = ({ budgets, products }) => {
   const [form, setForm] = useState({ ..._initForm })
+  const [msgAlert, setMsgAlert] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [columns, setColumns] = useState<ListColumn>({})
   const [rows, setRows] = useState<ListRow>({ ..._initRows })
@@ -103,16 +106,16 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
     {
       show: true,
       field: 'Product',
+      title: 'Product',
       headerClassName: 'grid-head-center',
-      title: 'Product'
     },
     {
       show: true,
       field: 'Price',
-      format: '{0:n}',
+      title: 'Price',
+      format: '{0:n2}',
       className: 'text-right',
       headerClassName: 'grid-head-center',
-      title: 'Price'
     },
   ]
 
@@ -567,9 +570,42 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
     setIsLoading(false)
   }
 
-  const handleSubmitCostValue = (field: string, value: string) => {
-    const values = value.split(',').map(val => parseFloat(val))
-    console.log(values)
+  const handleSubmitCostValue = async (field: string, value: string) => {
+    if (!field) {
+      setMsgAlert('Error, with product !!')
+      return
+    }
+    if (isNull(form.date)) {
+      setMsgAlert('Error, date is undefined !!')
+      return
+    }
+
+    const values = value.split(',').map(val => parseFloat(val)).filter(val => !isNaN(val))
+    if (!values.length) {
+      setMsgAlert('Error, values is empty !!')
+      return
+    }
+
+    const productId = parseFloat(field)
+    const params: BodyCreateCostValues[] = values.map(value => ({
+      payment: PaymentType.CREDIT,
+      cost_amount: value,
+      product_id: productId,
+      date: form.date?.format('YYYY-MM-DD') as string
+    }))
+
+    setIsLoading(true)
+    try {
+      const { success } = await costValueService.createCostValues<BodyCostValues, BodyCreateCostValues[]>(params)
+      if (success) {
+        handleSearchCostValue()
+      } else {
+        setIsLoading(false)
+      }
+    } catch (err) {
+      console.log(err)
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -578,6 +614,15 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
 
   return (
     <>
+      <BackdropLoading loading={isLoading} />
+
+      <SnackAlert
+        severity='error'
+        message={msgAlert}
+        open={msgAlert !== ''}
+        onClose={() => setMsgAlert('')}
+      />
+
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Stack
           direction='row'
