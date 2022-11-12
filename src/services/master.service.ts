@@ -1,4 +1,5 @@
 import { AxiosRequestConfig } from 'axios'
+import { BodyBalance } from '@hm-dto/services.dto'
 import ResfulApi from '@hm-utils/ResfulApi'
 
 class Service extends ResfulApi {
@@ -6,11 +7,11 @@ class Service extends ResfulApi {
     super('/master')
   }
 
-  getMonths = (option?: AxiosRequestConfig) =>
-    this.apiGet('/months', option)
+  getBalance = <T = BodyBalance>(option?: AxiosRequestConfig) => this.apiGet<T>('/balance', option)
 
-  getBudgets = (option?: AxiosRequestConfig) =>
-    this.apiGet('/budgets', option)
+  getMonths = <T>(option?: AxiosRequestConfig) => this.apiGet<T>('/months', option)
+
+  getBudgets = <T>(option?: AxiosRequestConfig) => this.apiGet<T>('/budgets', option)
 }
 
 export const masterService = new Service()

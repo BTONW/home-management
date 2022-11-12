@@ -35,3 +35,12 @@ export interface BodyBudgets {
   is_active: BitStatus
   budget_amount: number
 }
+
+export interface BodyBalance {
+  id: number
+  date: string
+  created_at: string
+  updated_at: string
+  is_active: BitStatus
+  balance_amount: number
+}

@@ -17,16 +17,16 @@ import {
 
 import { DataGridColumn } from '@hm-dto/components.dto'
 import { BitStatus, BudgetCode, PaymentType } from '@hm-dto/utils.dto'
-import { BodyProducts, BodyBudgets, BodyCostValues, BodyCreateCostValues } from '@hm-dto/services.dto'
+import { BodyProducts, BodyBudgets, BodyCostValues, BodyCreateCostValues, BodyBalance } from '@hm-dto/services.dto'
 
-import { costValueService } from '@hm-services/service'
+import { costValueService, masterService } from '@hm-services/service'
 
 import InputCost from '@hm-components/InputCost'
 import DatePicker from '@hm-components/DatePicker/Mobile'
 import { SnackAlert } from '@hm-components/Alert'
 import { BackdropLoading } from '@hm-components/Loading'
 
-const DataGrid = dynamic(() => import('@hm-components/DataGrid'), { ssr: false })
+const DataGrid = dynamic(() => import('./DataGrid'), { ssr: false })
 
 // -----------------------
 
@@ -50,9 +50,22 @@ interface ListRow {
   Sun: any[]
 }
 
+interface DiffDayCode {
+  Mon: BudgetCode
+  Tue: BudgetCode
+  Wed: BudgetCode
+  Thu: BudgetCode
+  Fri: BudgetCode
+  Sun: BudgetCode
+}
+
 interface CriteriaSearch {
   dates: string[]
   payments: string[]
+}
+
+interface CriteriaSearchBalance {
+  date: string
 }
 
 interface FormState {
@@ -72,6 +85,15 @@ interface Props {
 }
 
 // -----------------------
+
+const _diffDayCode: DiffDayCode = {
+  Mon: BudgetCode.FRI,
+  Tue: BudgetCode.MON,
+  Wed: BudgetCode.TUE,
+  Thu: BudgetCode.WED,
+  Fri: BudgetCode.THU,
+  Sun: BudgetCode.SAT
+}
 
 const _initRows: ListRow = {
   Mon: [],
@@ -100,7 +122,7 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [columns, setColumns] = useState<ListColumn>({})
   const [rows, setRows] = useState<ListRow>({ ..._initRows })
-  const [lastFridayRows, setLastFridayRows] = useState<any[]>([])
+  const [lastFridayBalance, setLastFridayBalance] = useState<BodyBalance | null>(null)
 
   const children: DataGridColumn[] = [
     {
@@ -127,7 +149,6 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
     // List Product & Total
     Object.keys(_rows).forEach((key) => {
       const rowKey = key as keyof ListRow
-
       _rows[rowKey] = [
         ...listRows[rowKey],
         {
@@ -138,17 +159,64 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
       ]
     })
 
-    // Cost of Living
+    // Cost of Living & Balance
     Object.keys(_rows).forEach((key) => {
       const rowKey = key as keyof ListRow
-
       switch (rowKey) {
+        case BudgetCode.MON: {
+          const total = _rows[rowKey].find(row => row.isTotal)?.Price || 0
+          const budget = budgets.find(budget => budget.code === rowKey)?.budget_amount || 0
+          const costOfLiving = !isNull(lastFridayBalance) && lastFridayBalance?.balance_amount < 0
+            ? budget + lastFridayBalance?.balance_amount
+            : budget
+          _rows[rowKey] = [
+            {
+              Product: 'Cost of living',
+              isCostOfLiving: true,
+              Price: costOfLiving
+            },
+            ..._rows[rowKey],
+            {
+              Product: 'Balance',
+              isBalance: true,
+              Price: costOfLiving - total
+            },
+          ]
+          break
+        }
+        case BudgetCode.TUE:
+        case BudgetCode.WED:
+        case BudgetCode.THU:
+        case BudgetCode.FRI:
+        case BudgetCode.SUN: {
+          const total = _rows[rowKey].find(row => row.isTotal).Price || 0
+          const budget = budgets.find(budget => budget.code === rowKey)?.budget_amount || 0
+          const balance = _rows[_diffDayCode[rowKey]].find(row => row.isBalance)?.Price || 0
+          const costOfLiving = balance < 0
+            ? budget + balance
+            : budget
+          _rows[rowKey] = [
+            {
+              Product: 'Cost of living',
+              isCostOfLiving: true,
+              Price: costOfLiving
+            },
+            ..._rows[rowKey],
+            {
+              Product: 'Balance',
+              isBalance: true,
+              Price: costOfLiving - total
+            },
+          ]
+          break
+        }
         case BudgetCode.SAT: {
           const costOfLiving = budgets.find(budget => budget.code === rowKey)?.budget_amount || 0
           const total = _rows[rowKey].find(row => row.isTotal).Price || 0
           _rows[rowKey] = [
             {
               Product: 'Cost of living',
+              isCostOfLiving: true,
               Price: costOfLiving
             },
             ..._rows[rowKey],
@@ -160,30 +228,9 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
           ]
           break
         }
-        case BudgetCode.SUN: {
-          const costOfLiving = budgets.find(budget => budget.code === rowKey)?.budget_amount || 0
-          const total = _rows[rowKey].find(row => row.isTotal).Price || 0
-          const yesterdayCostOfLiving = budgets.find(budget => budget.code === BudgetCode.SAT)?.budget_amount || 0
-          const yesterdayTotal = _rows[BudgetCode.SAT].find(row => row.isTotal).Price || 0
-          const yesterdayBalance = yesterdayCostOfLiving - yesterdayTotal
-          _rows[rowKey] = [
-            {
-              Product: 'Cost of living',
-              Price: costOfLiving + yesterdayBalance
-            },
-            ..._rows[rowKey],
-            {
-              Product: 'Balance',
-              Price: (costOfLiving + yesterdayBalance) - total
-            },
-          ]
-          break
-        }
       }
-
-      
     })
-
+    
     return _rows
   }
 
@@ -497,49 +544,34 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
     return criteria
   }
 
-  const handleSetCriteriaLastFriday = (): CriteriaSearch => {
+  const handleSetCriteriaSearchBalance = (): CriteriaSearchBalance => {
     const date = moment(form.date)
     const format = 'YYYY-MM-DD'
-    const criteria: CriteriaSearch = {
-      dates: [],
-      payments: ['Credit']
+    const criteria: CriteriaSearchBalance = {
+      date: ''
     }
 
     switch (date?.format('ddd')) {
       case BudgetCode.MON:
-        criteria.dates = [
-          moment(date).subtract(3, 'day').format(format),
-        ]
+        criteria.date = moment(date).subtract(3, 'day').format(format)
         break
       case BudgetCode.TUE:
-        criteria.dates = [
-          moment(date).subtract(4, 'day').format(format),
-        ]
+        criteria.date = moment(date).subtract(4, 'day').format(format)
         break
       case BudgetCode.WED:
-        criteria.dates = [
-          moment(date).subtract(5, 'day').format(format),
-        ]
+        criteria.date = moment(date).subtract(5, 'day').format(format)
         break
       case BudgetCode.THU:
-        criteria.dates = [
-          moment(date).subtract(6, 'day').format(format),
-        ]
+        criteria.date = moment(date).subtract(6, 'day').format(format)
         break
       case BudgetCode.FRI:
-        criteria.dates = [
-          moment(date).subtract(7, 'day').format(format),
-        ]
+        criteria.date = moment(date).subtract(7, 'day').format(format)
         break
       case BudgetCode.SAT:
-        criteria.dates = [
-          moment(date).subtract(1, 'day').format(format),
-        ]
+        criteria.date = moment(date).subtract(1, 'day').format(format)
         break
       case BudgetCode.SUN:
-        criteria.dates = [
-          moment(date).subtract(2, 'day').format(format),
-        ]
+        criteria.date = moment(date).subtract(2, 'day').format(format)
         break
     }
 
@@ -551,20 +583,23 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
     try {
       const [
         { body: bodyDays },
-        { body: bodyDay },
+        { body: bodyBalanceFriday },
       ] = await Promise.all([
         costValueService.getCostValuesByDays<ListRow>({
           params: handleSetCriteria()
         }),
-        costValueService.getCostValues<any[]>({
-          params: handleSetCriteriaLastFriday()
+        masterService.getBalance({
+          params: handleSetCriteriaSearchBalance()
         })
       ])
+      setLastFridayBalance(bodyBalanceFriday?.id
+        ? bodyBalanceFriday
+        : null
+      )
       setRows(handleSetRows(bodyDays))
-      setLastFridayRows(bodyDay)
     } catch (err) {
+      setLastFridayBalance(null)
       setRows({ ..._initRows })
-      setLastFridayRows([])
     }
     setColumns(handleSetColumns())
     setIsLoading(false)

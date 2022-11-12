@@ -23,6 +23,15 @@ export enum BudgetCode {
   SUN = 'Sun'
 }
 
+export enum DiffDayCodeCostOfLiving {
+  MON = 'Fri',
+  TUE = 'Mon',
+  WED = 'Tue',
+  THU = 'Wed',
+  FRI = 'Thu',
+  SUN = 'Sat'
+}
+
 export enum PaymentType {
   CASH = 'Cash',
   CREDIT = 'Credit'
