@@ -30,9 +30,9 @@ interface Pages {
 const pages: Pages[] = [
   {
     icon: <AttachMoneyIcon color='success' />,
-    path: '/weekdays',
-    primary: 'Weekdays',
-    secondary: 'budget weekdays'
+    path: '/cost-of-living',
+    primary: 'Cost of Living',
+    secondary: 'cost credit & cash'
   },
   {
     icon: <AttachMoneyIcon color='success' />,

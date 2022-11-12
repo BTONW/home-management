@@ -10,6 +10,7 @@ import {
   TextField,
   Autocomplete,
   Box,
+  Chip,
   List,
   ListItem,
   ListSubheader,
@@ -629,17 +630,29 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
       date: form.date?.format('YYYY-MM-DD') as string
     }))
 
-    setIsLoading(true)
+    if (productId === _initForm.productGrabId) {
+      setForm({ ...form, isLoadingGrab: true })
+    } else if (productId === _initForm.product7ElevenId) {
+      setForm({ ...form, isLoading7Eleven: true })
+    } else {
+      setForm({ ...form, isLoadingOther: true })
+    }
     try {
       const { success } = await costValueService.createCostValues<BodyCostValues, BodyCreateCostValues[]>(params)
       if (success) {
         handleSearchCostValue()
       } else {
-        setIsLoading(false)
+        setMsgAlert('Error, save failed !!')
       }
     } catch (err) {
       console.log(err)
-      setIsLoading(false)
+    }
+    if (productId === _initForm.productGrabId) {
+      setForm({ ...form, isLoadingGrab: false })
+    } else if (productId === _initForm.product7ElevenId) {
+      setForm({ ...form, isLoading7Eleven: false })
+    } else {
+      setForm({ ...form, isLoadingOther: false })
     }
   }
 
@@ -678,7 +691,11 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
             sx={{ 
               mb: { xs: 2, sm: 0 },
               mr: { xs: 0, sm: 2 },
-              width: { xs: '100%', sm: '30%', md: '23%' }
+              width: { xs: '100%', sm: '30%', md: '23%' },
+              display: 'flex',
+              flexWrap: 'wrap',
+              flexDirection: 'row',
+              justifyContent: 'space-between'
             }}
           >
             <DatePicker
@@ -689,6 +706,26 @@ const Weekdays: FC<Props> = ({ budgets, products }) => {
                 fullWidth: true
               }}
             />
+            {![BudgetCode.SAT, BudgetCode.SUN].includes(form.date?.format('ddd') as BudgetCode) &&
+             <Paper
+              elevation={0}
+              sx={{
+                my: 2,
+                display: 'inline-flex',
+                alignItems: 'flex-end',
+              }}
+             >
+                <Chip
+                  color='info'
+                  label={`Last Friday Balance : ${(
+                    lastFridayBalance?.balance_amount || 0).toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2
+                    })
+                  }`}
+                />
+             </Paper>
+            }
           </Paper>
           <Paper
             elevation={0}

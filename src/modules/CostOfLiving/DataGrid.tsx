@@ -23,7 +23,7 @@ const CellSummary = styled('td')<CellSummaryProps>`
 `
 
 const CellCostOfLiving = styled('td')`
-  color: #bab8b8;
+  color: #BAB8B8;
   font-weight: bold !important;
   border-width: 0 0 1px 0 !important;
 `
@@ -44,26 +44,41 @@ const DataGrid: FC<Props> = ({ rows, columns }) => {
           ? 'red'
           : 'green'
         : 'inherit'
+      
       return (
         <CellSummary
           color={color}
           className={cellProps.className}
           topBorderWidth={dataItem.isTotal ? 0 : 1}
         >
-          {dataItem[field as string]}
+          {field === 'Price'
+            ? parseFloat(dataItem[field as string])
+                .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : dataItem[field as string]
+          }
         </CellSummary>
       )
     }
+
     if (dataItem.isCostOfLiving) {
       return (
         <CellCostOfLiving className={cellProps.className}>
-          {dataItem[field as string]}
+          {field === 'Price'
+            ? parseFloat(dataItem[field as string])
+                .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : dataItem[field as string]
+          }
         </CellCostOfLiving>
       )
     }
+
     return (
       <CellNormal className={cellProps.className}>
-        {dataItem[field as string]}
+        {field === 'Price'
+          ? parseFloat(dataItem[field as string])
+              .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : dataItem[field as string]
+        }
       </CellNormal>
     )
   }

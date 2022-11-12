@@ -1,6 +1,6 @@
-import { FC, useState, useEffect } from 'react'
-import { Grid, GridProps, GridColumn } from '@progress/kendo-react-grid'
+import { FC } from 'react'
 import { DataGridColumn } from '@hm-dto/components.dto'
+import { Grid, GridProps, GridColumn } from '@progress/kendo-react-grid'
 
 interface Props  {
   config?: GridProps

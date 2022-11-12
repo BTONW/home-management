@@ -5,7 +5,7 @@ import { productService, masterService } from '@hm-services/service'
 import { BodyProducts, BodyBudgets } from '@hm-dto/services.dto'
 import { BreadCrumbs as BreadCrumbsDto } from '@hm-dto/components.dto'
 
-import Module from '@hm-modules/WeekDays'
+import Module from '@hm-modules/CostOfLiving'
 
 interface Props {
   resBudgets: BodyBudgets[]
@@ -33,7 +33,7 @@ export const getStaticProps = async () => {
     props: {
       breadcrumbs: [
         { text: 'Home', path: '/' },
-        { text: 'Weekdays' }
+        { text: 'Cost of living' }
       ],
       resBudgets,
       resProduct
