@@ -44,3 +44,8 @@ export interface BodyBalance {
   is_active: BitStatus
   balance_amount: number
 }
+
+export interface BodyUpsertBalance {
+  date: string
+  balance_amount: number
+}
