@@ -11,21 +11,28 @@ import {
 const InputCost: FC<TextFieldProps & {
   field: string
   loading?: boolean
-  onEnter?: (name: string, val: string) => void 
+  isAdornment?: boolean
+  isMultiSubmit?: boolean
+  onEnter?: (name: string, val: string) => void
 }> = ({
   field,
   onEnter,
   loading,
   inputProps,
   InputProps,
+  defaultValue = '',
+  isAdornment = true,
+  isMultiSubmit = true,
   ...props
 }) => {
-  const [val, setVal] = useState('')
+  const [val, setVal] = useState<string>(defaultValue as string)
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (isEmpty(e.target.value)) {
       setVal(e.target.value)
-    } else if (/^[0-9.,-]*$/.test(e.target.value)) {
+    } else if (isMultiSubmit && /^[0-9.,]*$/.test(e.target.value)) {
+      setVal(e.target.value)
+    } else if (/^[0-9.]*$/.test(e.target.value)) {
       setVal(e.target.value)
     }
   }
@@ -40,13 +47,14 @@ const InputCost: FC<TextFieldProps & {
         : props.disabled
       }
       sx={{
+        bgcolor: '#FFF',
         '& .Mui-disabled': {
           bgcolor: '#F8F8F8'
         }
       }}
       InputProps={{
         ...InputProps,
-        startAdornment: (
+        startAdornment: isAdornment ? (
           <InputAdornment position='start' sx={{ p: 0 }}>
             {loading
               ? (
@@ -57,7 +65,7 @@ const InputCost: FC<TextFieldProps & {
               )
             }
           </InputAdornment>
-        )
+        ) : null
       }}
       inputProps={{
         ...inputProps,

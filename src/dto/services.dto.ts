@@ -15,6 +15,12 @@ export interface BodyCreateCostValues {
   payment: PaymentType
 }
 
+export interface BodyUpdateCostValues {
+  date: string
+  cost_amount: number
+  cost_value_id: number
+}
+
 export interface BodyProducts {
   id: number
   name: string

@@ -1,12 +1,22 @@
 import styled from '@emotion/styled'
-import { GridCellProps } from '@progress/kendo-react-grid'
-import { FC, ReactElement, JSXElementConstructor } from 'react'
+import { isUndefined } from 'lodash'
+import { GridCellProps, GridRowClickEvent } from '@progress/kendo-react-grid'
+import { FC, ReactElement, JSXElementConstructor, useState } from 'react'
 import { DataGridColumn } from '@hm-dto/components.dto'
+import InputCost from '@hm-components/InputCost'
 import ComponentDataGrid from '@hm-components/DataGrid'
+
+export interface SubmitOption {
+  date: string
+  value: number
+  costValueId: number
+}
 
 interface Props {
   rows: any[]
+  date: string
   columns: DataGridColumn[]
+  onSubmit?: (options: SubmitOption) => void
 }
 
 interface CellSummaryProps {
@@ -30,9 +40,11 @@ const CellCostOfLiving = styled('td')`
 
 const CellNormal = styled('td')`
   border-width: 0 0 0 0 !important;
+  height: 60px;
 `
 
-const DataGrid: FC<Props> = ({ rows, columns }) => {
+const DataGrid: FC<Props> = ({ date, rows, columns, onSubmit }) => {
+  const [editRow, setEditRow] = useState<number | null>(null)
 
   const handleCell = (
     cell: ReactElement<HTMLTableCellElement, string | JSXElementConstructor<any>> | null,
@@ -72,6 +84,29 @@ const DataGrid: FC<Props> = ({ rows, columns }) => {
       )
     }
 
+    if (dataItem.CostValueId === editRow && field === 'Price') {
+      return (
+        <CellNormal className={cellProps.className}>
+          <InputCost
+            size='small'
+            isMultiSubmit={false}
+            defaultValue={dataItem.Price}
+            field={editRow?.toLocaleString() as string}
+            onEnter={(field, val) => {
+              if (onSubmit && val !== dataItem.Price) {
+                onSubmit({
+                  date,
+                  value: parseFloat(val),
+                  costValueId: parseFloat(field)
+                })
+              }
+              setEditRow(null)
+            }}
+          />
+        </CellNormal>
+      )
+    }
+
     return (
       <CellNormal className={cellProps.className}>
         {field === 'Price'
@@ -83,12 +118,21 @@ const DataGrid: FC<Props> = ({ rows, columns }) => {
     )
   }
 
+  const handleRowClick = ({ dataItem }: GridRowClickEvent) => {
+    setEditRow(
+      isUndefined(dataItem.CostValueId) || dataItem.CostValueId === editRow
+        ? null
+        : dataItem.CostValueId
+    )
+  }
+
   return (
     <ComponentDataGrid
       rows={rows}
       columns={columns}
       config={{
-        cellRender: handleCell
+        cellRender: handleCell,
+        onRowClick: handleRowClick
       }}
     />
   )

@@ -18,7 +18,14 @@ import {
 
 import { DataGridColumn } from '@hm-dto/components.dto'
 import { BitStatus, BudgetCode, PaymentType } from '@hm-dto/utils.dto'
-import { BodyProducts, BodyBudgets, BodyCostValues, BodyCreateCostValues, BodyBalance } from '@hm-dto/services.dto'
+import {
+  BodyBalance,
+  BodyBudgets,
+  BodyProducts,
+  BodyCostValues,
+  BodyCreateCostValues,
+  BodyUpdateCostValues
+} from '@hm-dto/services.dto'
 
 import { costValueService, balanceService } from '@hm-services/service'
 
@@ -27,18 +34,23 @@ import DatePicker from '@hm-components/DatePicker/Mobile'
 import { SnackAlert } from '@hm-components/Alert'
 import { BackdropLoading } from '@hm-components/Loading'
 
+import { SubmitOption } from './DataGrid'
 const DataGrid = dynamic(() => import('./DataGrid'), { ssr: false })
 
 // -----------------------
 
+interface Column {
+  date: string
+  columns: DataGridColumn[]
+}
 interface ListColumn {
-  Mon?: DataGridColumn[]
-  Tue?: DataGridColumn[]
-  Wed?: DataGridColumn[]
-  Thu?: DataGridColumn[]
-  Fri?: DataGridColumn[]
-  Sat?: DataGridColumn[]
-  Sun?: DataGridColumn[]
+  Mon?: Column
+  Tue?: Column
+  Wed?: Column
+  Thu?: Column
+  Fri?: Column
+  Sat?: Column
+  Sun?: Column
 }
 
 interface ListRow {
@@ -119,9 +131,10 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [columns, setColumns] = useState<ListColumn>({})
   const [rows, setRows] = useState<ListRow>({ ..._initRows })
+  const [costValues, setCostValues] = useState<ListRow>({ ..._initRows })
   const [lastFridayBalance, setLastFridayBalance] = useState<BodyBalance | null>(null)
   const [fridayDate, setFridayDate] = useState('')
-  const [fridayBalance, setFridayBalance] = useState<number>(0)
+  const [fridayBalance, setFridayBalance] = useState<number | null>(null)
 
   const children: DataGridColumn[] = [
     {
@@ -142,18 +155,18 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
 
   // handerler -------------------------
 
-  const handleSetRows = (listRows: ListRow): ListRow => {
+  const handleSetRows = (): ListRow => {
     const _rows: ListRow = { ..._initRows }
     
     // List Product & Total
     Object.keys(_rows).forEach((key) => {
       const rowKey = key as keyof ListRow
       _rows[rowKey] = [
-        ...listRows[rowKey],
+        ...costValues[rowKey],
         {
           Product: 'Total',
           isTotal: true,
-          Price: (listRows[rowKey]).reduce((value, row) => value + row.Price, 0)
+          Price: (costValues[rowKey]).reduce((value, row) => value + row.Price, 0)
         }
       ]
     })
@@ -238,247 +251,333 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
         }
       }
     })
-
-    setFridayBalance(_rows[BudgetCode.FRI].find(item => item.isBalance)?.Price || 0)
     
     return _rows
   }
 
   const handleSetColumns = (): ListColumn => {
     const date = moment(form.date)
-    const format = 'MMMM / dddd DD'
+    const formatDate = 'YYYY-MM-DD'
+    const formatTitle = 'MMMM / dddd DD'
 
     switch (date?.format('ddd')) {
       case BudgetCode.MON:
-        setFridayDate(moment(date).add(4, 'day').format('YYYY-MM-DD'))
+        setFridayDate(moment(date).add(4, 'day').format(formatDate))
         return {
-          [BudgetCode.MON]: [{
-            show: true,
-            field: 'Monday',
-            headerClassName: 'grid-head-center grid-head-active',
-            title: moment(date).format(format),
-            children
-          }],
-          [BudgetCode.TUE]: [{
-            show: true,
-            field: 'Tuesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.WED]: [{
-            show: true,
-            field: 'Wednesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(2, 'day').format(format),
-            children
-          }],
-          [BudgetCode.THU]: [{
-            show: true,
-            field: 'Thursday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(3, 'day').format(format),
-            children
-          }],
-          [BudgetCode.FRI]: [{
-            show: true,
-            field: 'Friday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(4, 'day').format(format),
-            children
-          }]
+          [BudgetCode.MON]: {
+            date: moment(date).format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Monday',
+              headerClassName: 'grid-head-center grid-head-active',
+              title: moment(date).format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.TUE]: {
+            date: moment(date).add(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Tuesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.WED]: {
+            date: moment(date).add(2, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Wednesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(2, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.THU]: {
+            date: moment(date).add(3, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Thursday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(3, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.FRI]: {
+            date: moment(date).add(4, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Friday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(4, 'day').format(formatTitle),
+              children
+            }]
+          }
         }
       case BudgetCode.TUE:
-        setFridayDate(moment(date).add(3, 'day').format('YYYY-MM-DD'))
+        setFridayDate(moment(date).add(3, 'day').format(formatDate))
         return {
-          [BudgetCode.MON]: [{
-            show: true,
-            field: 'Monday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.TUE]: [{
-            show: true,
-            field: 'Tuesday',
-            headerClassName: 'grid-head-center grid-head-active',
-            title: moment(date).format(format),
-            children
-          }],
-          [BudgetCode.WED]: [{
-            show: true,
-            field: 'Wednesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.THU]: [{
-            show: true,
-            field: 'Thursday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(2, 'day').format(format),
-            children
-          }],
-          [BudgetCode.FRI]: [{
-            show: true,
-            field: 'Friday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(3, 'day').format(format),
-            children
-          }]
+          [BudgetCode.MON]: {
+            date: moment(date).subtract(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Monday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.TUE]: {
+            date: moment(date).format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Tuesday',
+              headerClassName: 'grid-head-center grid-head-active',
+              title: moment(date).format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.WED]: {
+            date: moment(date).add(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Wednesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.THU]: {
+            date: moment(date).add(2, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Thursday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(2, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.FRI]: {
+            date: moment(date).add(3, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Friday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(3, 'day').format(formatTitle),
+              children
+            }]
+          }
         }
       case BudgetCode.WED:
-        setFridayDate(moment(date).add(2, 'day').format('YYYY-MM-DD'))
+        setFridayDate(moment(date).add(2, 'day').format(formatDate))
         return {
-          [BudgetCode.MON]: [{
-            show: true,
-            field: 'Monday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(2, 'day').format(format),
-            children
-          }],
-          [BudgetCode.TUE]: [{
-            show: true,
-            field: 'Tuesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.WED]: [{
-            show: true,
-            field: 'Wednesday',
-            headerClassName: 'grid-head-center grid-head-active',
-            title: moment(date).format(format),
-            children
-          }],
-          [BudgetCode.THU]: [{
-            show: true,
-            field: 'Thursday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.FRI]: [{
-            show: true,
-            field: 'Friday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(2, 'day').format(format),
-            children
-          }]
+          [BudgetCode.MON]: {
+            date: moment(date).subtract(2, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Monday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(2, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.TUE]: {
+            date: moment(date).subtract(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Tuesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.WED]: {
+            date: moment(date).format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Wednesday',
+              headerClassName: 'grid-head-center grid-head-active',
+              title: moment(date).format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.THU]: {
+            date: moment(date).add(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Thursday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.FRI]: {
+            date: moment(date).add(2, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Friday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(2, 'day').format(formatTitle),
+              children
+            }]
+          }
         }
       case BudgetCode.THU:
-        setFridayDate(moment(date).add(1, 'day').format('YYYY-MM-DD'))
+        setFridayDate(moment(date).add(1, 'day').format(formatDate))
         return {
-          [BudgetCode.MON]: [{
-            show: true,
-            field: 'Monday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(3, 'day').format(format),
-            children
-          }],
-          [BudgetCode.TUE]: [{
-            show: true,
-            field: 'Tuesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(2, 'day').format(format),
-            children
-          }],
-          [BudgetCode.WED]: [{
-            show: true,
-            field: 'Wednesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.THU]: [{
-            show: true,
-            field: 'Thursday',
-            headerClassName: 'grid-head-center grid-head-active',
-            title: moment(date).format(format),
-            children
-          }],
-          [BudgetCode.FRI]: [{
-            show: true,
-            field: 'Friday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(1, 'day').format(format),
-            children
-          }]
+          [BudgetCode.MON]: {
+            date: moment(date).subtract(3, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Monday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(3, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.TUE]: {
+            date: moment(date).subtract(2, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Tuesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(2, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.WED]: {
+            date: moment(date).subtract(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Wednesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.THU]: {
+            date: moment(date).format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Thursday',
+              headerClassName: 'grid-head-center grid-head-active',
+              title: moment(date).format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.FRI]: {
+            date: moment(date).add(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Friday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(1, 'day').format(formatTitle),
+              children
+            }]
+          }
         }
       case BudgetCode.FRI:
-        setFridayDate(moment(date).format('YYYY-MM-DD'))
+        setFridayDate(moment(date).format(formatDate))
         return {
-          [BudgetCode.MON]: [{
-            show: true,
-            field: 'Monday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(4, 'day').format(format),
-            children
-          }],
-          [BudgetCode.TUE]: [{
-            show: true,
-            field: 'Tuesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(3, 'day').format(format),
-            children
-          }],
-          [BudgetCode.WED]: [{
-            show: true,
-            field: 'Wednesday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(2, 'day').format(format),
-            children
-          }],
-          [BudgetCode.THU]: [{
-            show: true,
-            field: 'Thursday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.FRI]: [{
-            show: true,
-            field: 'Friday',
-            headerClassName: 'grid-head-center grid-head-active',
-            title: moment(date).format(format),
-            children
-          }]
+          [BudgetCode.MON]: {
+            date: moment(date).subtract(4, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Monday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(4, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.TUE]: {
+            date: moment(date).subtract(3, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Tuesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(3, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.WED]: {
+            date: moment(date).subtract(2, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Wednesday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(2, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.THU]: {
+            date: moment(date).subtract(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Thursday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.FRI]: {
+            date: moment(date).format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Friday',
+              headerClassName: 'grid-head-center grid-head-active',
+              title: moment(date).format(formatTitle),
+              children
+            }]
+          }
         }
       case BudgetCode.SAT:
-        setFridayDate(moment(date).subtract(1, 'day').format('YYYY-MM-DD'))
+        setFridayDate('')
         return {
-          [BudgetCode.SAT]: [{
-            show: true,
-            field: 'Saturday',
-            headerClassName: 'grid-head-center grid-head-active',
-            title: moment(date).format(format),
-            children
-          }],
-          [BudgetCode.SUN]: [{
-            show: true,
-            field: 'Sunday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).add(1, 'day').format(format),
-            children
-          }]
+          [BudgetCode.SAT]: {
+            date: moment(date).format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Saturday',
+              headerClassName: 'grid-head-center grid-head-active',
+              title: moment(date).format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.SUN]: {
+            date: moment(date).add(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Sunday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).add(1, 'day').format(formatTitle),
+              children
+            }]
+          }
         }
       case BudgetCode.SUN:
-        setFridayDate(moment(date).subtract(2, 'day').format('YYYY-MM-DD'))
+        setFridayDate('')
         return {
-          [BudgetCode.SAT]: [{
-            show: true,
-            field: 'Saturday',
-            headerClassName: 'grid-head-center',
-            title: moment(date).subtract(1, 'day').format(format),
-            children
-          }],
-          [BudgetCode.SUN]: [{
-            show: true,
-            field: 'Sunday',
-            headerClassName: 'grid-head-center grid-head-active',
-            title: moment(date).format(format),
-            children
-          }]
+          [BudgetCode.SAT]: {
+            date: moment(date).subtract(1, 'day').format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Saturday',
+              headerClassName: 'grid-head-center',
+              title: moment(date).subtract(1, 'day').format(formatTitle),
+              children
+            }]
+          },
+          [BudgetCode.SUN]: {
+            date:  moment(date).format(formatDate),
+            columns: [{
+              show: true,
+              field: 'Sunday',
+              headerClassName: 'grid-head-center grid-head-active',
+              title: moment(date).format(formatTitle),
+              children
+            }]
+          }
         }
       default:
         return {}
@@ -497,7 +596,6 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       case BudgetCode.MON:
         criteria.dates = {
           cost_value: [
-            // moment(date).subtract(3, 'day').format(format),
             moment(date).format(format),
             moment(date).add(1, 'day').format(format),
             moment(date).add(2, 'day').format(format),
@@ -510,7 +608,6 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       case BudgetCode.TUE:
         criteria.dates = {
           cost_value: [
-            // moment(date).subtract(4, 'day').format(format),
             moment(date).subtract(1, 'day').format(format),
             moment(date).format(format),
             moment(date).add(1, 'day').format(format),
@@ -523,7 +620,6 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       case BudgetCode.WED:
         criteria.dates = {
           cost_value: [
-            // moment(date).subtract(5, 'day').format(format),
             moment(date).subtract(2, 'day').format(format),
             moment(date).subtract(1, 'day').format(format),
             moment(date).format(format),
@@ -536,7 +632,6 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       case BudgetCode.THU:
         criteria.dates = {
           cost_value: [
-            // moment(date).subtract(6, 'day').format(format),
             moment(date).subtract(3, 'day').format(format),
             moment(date).subtract(2, 'day').format(format),
             moment(date).subtract(1, 'day').format(format),
@@ -549,7 +644,6 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       case BudgetCode.FRI:
         criteria.dates = {
           cost_value: [
-            // moment(date).subtract(7, 'day').format(format),
             moment(date).subtract(4, 'day').format(format),
             moment(date).subtract(3, 'day').format(format),
             moment(date).subtract(2, 'day').format(format),
@@ -596,20 +690,18 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
           params: handleSetCriteria('balance')
         })
       ])
-      if (bodyBalances.length) {
-        const [balance] = bodyBalances
-        setLastFridayBalance(balance?.id
-          ? balance
-          : null
-        )
-      }
-      setColumns(handleSetColumns())
-      setRows(handleSetRows(bodyCostValues))
+
+      const [balance] = bodyBalances
+      setLastFridayBalance(balance?.id
+        ? balance
+        : null
+      )
+      setCostValues(bodyCostValues)
     } catch (err) {
       setLastFridayBalance(null)
-      setRows({ ..._initRows })
-      setColumns(handleSetColumns())
+      setCostValues({ ..._initRows })
     }
+    setColumns(handleSetColumns())
     setIsLoading(false)
   }
 
@@ -653,6 +745,7 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       }
     } catch (err) {
       console.log(err)
+      setMsgAlert('Error, save failed !!')
     }
     if (productId === _initForm.productGrabId) {
       setForm({ ...form, isLoadingGrab: false })
@@ -663,8 +756,38 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
     }
   }
 
+  const handleSubmitGridCostValue = async (option: SubmitOption) => {
+    if (!option.costValueId) {
+      setMsgAlert('Error, with ID cost of value !!')
+      return
+    }
+    if (isNull(option.date)) {
+      setMsgAlert('Error, date for cost of value is undefined !!')
+      return
+    }
+    if (isNaN(option.value)) {
+      setMsgAlert('Error, values is Invalid !!')
+      return
+    }
+    const params: BodyUpdateCostValues[] = [{
+      date: option.date,
+      cost_amount: option.value,
+      cost_value_id: option.costValueId,
+    }]
+    try {
+      const { success, body } = await costValueService.updateCostValues<any[], BodyUpdateCostValues[]>(params)
+      if (success) {
+        handleSearchCostValue()
+      } else {
+        setMsgAlert(`Error, ${body.join(', ')} !!`)
+      }
+    } catch (err) {
+      setMsgAlert('Error, save failed !!')
+    }
+  }
+
   const handleSubmitBalance = async () => {
-    if (fridayBalance > 0 && fridayDate) {
+    if (fridayDate && !isNull(fridayBalance)) {
       try {
         await balanceService.upsertBalance({
           date: fridayDate,
@@ -681,8 +804,16 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
   }, [form.date])
 
   useEffect(() => {
+    const _rows = handleSetRows()
+    setRows(_rows)
+    setFridayBalance(_rows[BudgetCode.FRI]
+      .find(item => item.isBalance)?.Price || null
+    )
+  }, [lastFridayBalance, costValues])
+
+  useEffect(() => {
     handleSubmitBalance()
-  }, [fridayBalance])
+  }, [fridayBalance, fridayDate])
 
   return (
     <>
@@ -832,8 +963,10 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
             Object.keys(columns).map(key => (
               <Grid key={key} item xs={12} sm={6} md={4} >
                 <DataGrid
+                  onSubmit={handleSubmitGridCostValue}
                   rows={rows[key as keyof ListColumn] as any[]}
-                  columns={columns[key as keyof ListColumn] as DataGridColumn[]}
+                  date={columns[key as keyof ListColumn]?.date as string}
+                  columns={columns[key as keyof ListColumn]?.columns as DataGridColumn[]}
                 />
               </Grid>
             ))

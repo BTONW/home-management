@@ -11,6 +11,8 @@ class Service extends ResfulApi {
   getCostValuesByDays = <T>(option?: AxiosRequestConfig) => this.apiGet<T>('/days', option)
 
   createCostValues = <T, P>(params: P, option?: AxiosRequestConfig) => this.apiPost<T>('/create', params, option)
+
+  updateCostValues = <T, P>(params: P, option?: AxiosRequestConfig) => this.apiPut<T>('/update', params, option)
   
 }
 
