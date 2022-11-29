@@ -15,7 +15,7 @@ export const SnackAlert: FC<Props> = ({
   message,
   severity,
   open = false,
-  autoHideDuration = 6000,
+  autoHideDuration = 2000,
   anchorOrigin = {
     vertical: 'top',
     horizontal: 'center'

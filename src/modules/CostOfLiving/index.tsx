@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic'
 import moment, { Moment } from 'moment'
 import { isNull, isNaN } from 'lodash'
-import { FC, useState, useEffect } from 'react'
+import { FC, useState, useEffect, useContext } from 'react'
 import {
   Grid,
   Stack,
@@ -20,8 +20,6 @@ import { DataGridColumn } from '@hm-dto/components.dto'
 import { BitStatus, BudgetCode, PaymentType } from '@hm-dto/utils.dto'
 import {
   BodyBalance,
-  BodyBudgets,
-  BodyProducts,
   BodyCostValues,
   BodyCreateCostValues,
   BodyUpdateCostValues
@@ -30,12 +28,14 @@ import {
 import { costValueService, balanceService } from '@hm-services/service'
 
 import InputCost from '@hm-components/InputCost'
+import AppContext from '@hm-stores/app.context'
 import DatePicker from '@hm-components/DatePicker/Mobile'
-import { SnackAlert } from '@hm-components/Alert'
-import { BackdropLoading } from '@hm-components/Loading'
+
+import MatchSum from './MatchSum'
 
 import { SubmitOption } from './DataGrid'
 const DataGrid = dynamic(() => import('./DataGrid'), { ssr: false })
+
 
 // -----------------------
 
@@ -43,6 +43,7 @@ interface Column {
   date: string
   columns: DataGridColumn[]
 }
+
 interface ListColumn {
   Mon?: Column
   Tue?: Column
@@ -88,11 +89,6 @@ interface FormState {
   isLoading7Eleven: boolean
 }
 
-interface Props {
-  budgets: BodyBudgets[]
-  products: BodyProducts[]
-}
-
 // -----------------------
 
 const _diffDayCode: DiffDayCode = {
@@ -125,10 +121,12 @@ const _initForm: FormState = {
   isLoading7Eleven: false
 }
 
-const CostOfLiving: FC<Props> = ({ budgets, products }) => {
+const weekEnd = [BudgetCode.SAT, BudgetCode.SUN]
+const weekDay = [BudgetCode.MON, BudgetCode.TUE, BudgetCode.WED, BudgetCode.THU, BudgetCode.FRI]
+
+const CostOfLiving: FC = () => {
+  const { budgets, products, set } = useContext(AppContext)
   const [form, setForm] = useState({ ..._initForm })
-  const [msgAlert, setMsgAlert] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [columns, setColumns] = useState<ListColumn>({})
   const [rows, setRows] = useState<ListRow>({ ..._initRows })
   const [costValues, setCostValues] = useState<ListRow>({ ..._initRows })
@@ -154,6 +152,26 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
   ]
 
   // handerler -------------------------
+
+  const handleGetCostOfLiving = () => {
+    switch (form.date?.format('ddd')) {
+      case BudgetCode.MON:
+      case BudgetCode.TUE:
+      case BudgetCode.WED:
+      case BudgetCode.THU:
+      case BudgetCode.FRI:
+        return budgets
+          .filter(budget => weekDay.includes(budget.code))
+          .reduce((prev, val) => prev + val.budget_amount, 0)
+      case BudgetCode.SAT:
+      case BudgetCode.SUN:
+        return budgets
+          .filter(budget => weekEnd.includes(budget.code))
+          .reduce((prev, val) => prev + val.budget_amount, 0)
+      default:
+        return 0
+    }
+  }
 
   const handleSetRows = (): ListRow => {
     const _rows: ListRow = { ..._initRows }
@@ -677,7 +695,7 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
   }
 
   const handleSearchCostValue = async () => {
-    setIsLoading(true)
+    set('loading', true)
     try {
       const [
         { body: bodyCostValues },
@@ -702,22 +720,31 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       setCostValues({ ..._initRows })
     }
     setColumns(handleSetColumns())
-    setIsLoading(false)
+    set('loading', false)
   }
 
   const handleSubmitCostValue = async (field: string, value: string) => {
     if (!field) {
-      setMsgAlert('Error, with product !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, with product !!'
+      })
       return
     }
     if (isNull(form.date)) {
-      setMsgAlert('Error, date is undefined !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, date is undefined !!'
+      })
       return
     }
 
     const values = value.split(',').map(val => parseFloat(val)).filter(val => !isNaN(val))
     if (!values.length) {
-      setMsgAlert('Error, values is empty !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, values is empty !!'
+      })
       return
     }
 
@@ -741,11 +768,17 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       if (success) {
         handleSearchCostValue()
       } else {
-        setMsgAlert('Error, save failed !!')
+        set('snackAlert', {
+          type: 'error',
+          msg: 'Error, save failed !!'
+        })
       }
     } catch (err) {
       console.log(err)
-      setMsgAlert('Error, save failed !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, save failed !!'
+      })
     }
     if (productId === _initForm.productGrabId) {
       setForm({ ...form, isLoadingGrab: false })
@@ -758,15 +791,24 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
 
   const handleSubmitGridCostValue = async (option: SubmitOption) => {
     if (!option.costValueId) {
-      setMsgAlert('Error, with ID cost of value !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, with ID cost of value !!'
+      })
       return
     }
     if (isNull(option.date)) {
-      setMsgAlert('Error, date for cost of value is undefined !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, date for cost of value is undefined !!'
+      })
       return
     }
     if (isNaN(option.value)) {
-      setMsgAlert('Error, values is Invalid !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, values is Invalid !!'
+      })
       return
     }
     const params: BodyUpdateCostValues[] = [{
@@ -779,10 +821,16 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
       if (success) {
         handleSearchCostValue()
       } else {
-        setMsgAlert(`Error, ${body.join(', ')} !!`)
+        set('snackAlert', {
+          type: 'error',
+          msg: `Error, ${body.join(', ')} !!`
+        })
       }
     } catch (err) {
-      setMsgAlert('Error, save failed !!')
+      set('snackAlert', {
+        type: 'error',
+        msg: 'Error, save failed !!'
+      })
     }
   }
 
@@ -794,7 +842,10 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
           balance_amount: fridayBalance
         })
       } catch (err) {
-        setMsgAlert('Error, save balance friday failed !!')
+        set('snackAlert', {
+          type: 'error',
+          msg: 'Error, save balance friday failed !!'
+        })
       }
     }
   }
@@ -815,17 +866,15 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
     handleSubmitBalance()
   }, [fridayBalance, fridayDate])
 
+  // -----------------------------------
+  const costOfLiving = handleGetCostOfLiving()
+  const total = Object.keys(rows).reduce((prev, key) => {
+    const itemTotal = rows[key as keyof ListRow].find((row: any) => row.isTotal)
+    return prev + (itemTotal?.Price || 0)
+  }, 0)
+
   return (
     <>
-      <BackdropLoading loading={isLoading} />
-
-      <SnackAlert
-        severity='error'
-        message={msgAlert}
-        open={msgAlert !== ''}
-        onClose={() => setMsgAlert('')}
-      />
-
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Stack
           direction='row'
@@ -861,15 +910,31 @@ const CostOfLiving: FC<Props> = ({ budgets, products }) => {
                 fullWidth: true
               }}
             />
+            <Box sx={{ mt: 2, width: '100%' }}>
+              <MatchSum
+                label='Cost of Living'
+                value={costOfLiving}
+              />
+              <MatchSum
+                label='Total'
+                value={total}
+                underline='one'
+              />
+              <MatchSum
+                label='Balance'
+                underline='two'
+                value={costOfLiving - total}
+              />
+            </Box>
             {![BudgetCode.SAT, BudgetCode.SUN].includes(form.date?.format('ddd') as BudgetCode) &&
-             <Paper
-              elevation={0}
-              sx={{
-                my: 2,
-                display: 'inline-flex',
-                alignItems: 'flex-end',
-              }}
-             >
+              <Paper
+                elevation={0}
+                sx={{
+                  my: 2,
+                  display: 'inline-flex',
+                  alignItems: 'flex-end',
+                }}
+              >
                 <Chip
                   color='info'
                   label={`Last Friday Balance : ${(

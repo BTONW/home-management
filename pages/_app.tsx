@@ -5,17 +5,30 @@ import '@fontsource/roboto/700.css'
 import '@progress/kendo-theme-material/dist/all.css'
 import '@hm-css/globals.css'
 
-import type { AppProps } from 'next/app'
-import { FC } from 'react'
+import { FC, } from 'react'
+import { AppProps } from 'next/app'
+import { AppProvider } from '@hm-stores/app.context'
+
 import Layout from '@hm-components/Layout'
 
 const App: FC<AppProps> = ({ Component, pageProps }) => {
-  const { breadcrumbs } = pageProps
+  const {
+    breadcrumbs = [],
+    _withMaster = {},
+    ...props
+  } = pageProps
 
   return (
-    <Layout breadcrumbs={breadcrumbs}>
-      <Component {...pageProps} />
-    </Layout>
+    <AppProvider
+      value={{
+        budgets: _withMaster?.budgets || [],
+        products: _withMaster?.products || []
+      }}
+    >
+      <Layout breadcrumbs={breadcrumbs}>
+        <Component {...props} />
+      </Layout>
+    </AppProvider>
   )
 }
 

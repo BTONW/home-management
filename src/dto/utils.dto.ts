@@ -3,6 +3,11 @@ export enum BitStatus {
   FALSE = '0'
 }
 
+export enum MasterTypes {
+  BUDGETS = 'budgets',
+  PRODUCTS = 'products'
+}
+
 export enum HttpStatus {
   OK           = 200,
   NO_CONTENT   = 204,
