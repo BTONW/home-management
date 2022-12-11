@@ -111,7 +111,7 @@ const Navigator: FC<Props> = ({ open, onNavigator }) => {
       anchor='left'
       onClose={() => onNavigator(false)}
     >
-      <Box sx={{ display: 'flex', bgcolor: 'rgb(5, 30, 52)', height: '100%' }}>
+      <Box sx={{ bgcolor: 'rgb(5, 30, 52)', height: '100%' }}>
         <ThemeProvider
           theme={createTheme({
             components: {
@@ -136,11 +136,13 @@ const Navigator: FC<Props> = ({ open, onNavigator }) => {
                     sx={{ height: 56 }}
                     onClick={() => onNavigator(false)}
                   >
-                    <ListItemIcon sx={{ marginTop: -0.6 }}>
-                      <Cottage color='primary' />
-                    </ListItemIcon>
                     <ListItemText
-                      primary='ome Management'
+                      primary={(
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Cottage color='primary' />
+                          <Box sx={{ pt: 1, pl: 0.5 }}>ome Management</Box>
+                        </Box>
+                      )}
                       primaryTypographyProps={{
                         color: 'primary',
                         variant: 'body2',
@@ -157,7 +159,7 @@ const Navigator: FC<Props> = ({ open, onNavigator }) => {
                       '& svg': {
                         transition: '0.4s',
                         transformStyle: 'preserve-3d',
-                        color: 'rgba(255,255,255,0.8)',
+                        color: 'rgba(255, 255, 255, 0.8)',
                         transform: 'translateX(0) rotate(0)',
                       },
                       '&:hover, &:focus': {

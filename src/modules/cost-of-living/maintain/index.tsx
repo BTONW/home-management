@@ -124,7 +124,7 @@ const _initForm: FormState = {
 const weekEnd = [BudgetCode.SAT, BudgetCode.SUN]
 const weekDay = [BudgetCode.MON, BudgetCode.TUE, BudgetCode.WED, BudgetCode.THU, BudgetCode.FRI]
 
-const CostOfLiving: FC = () => {
+const Module: FC = () => {
   const { budgets, products, set } = useContext(AppContext)
   const [form, setForm] = useState({ ..._initForm })
   const [columns, setColumns] = useState<ListColumn>({})
@@ -1042,4 +1042,4 @@ const CostOfLiving: FC = () => {
   )
 }
 
-export default CostOfLiving
+export default Module
