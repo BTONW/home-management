@@ -1,4 +1,4 @@
-import { FC, ReactNode } from 'react'
+import { FC, ReactNode, useState } from 'react'
 import { Box, Container, Breadcrumbs, Typography, Link } from '@mui/material'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import NextLink from 'next/link'
@@ -6,6 +6,7 @@ import NextLink from 'next/link'
 import { BreadCrumbs as BreadCrumbsDto } from '@hm-dto/components.dto'
 
 import Header from './Header'
+import Navigator from './Navigator'
 
 interface Props {
   children?: ReactNode
@@ -13,13 +14,18 @@ interface Props {
 }
 
 const Layout: FC<Props> = ({ children, breadcrumbs }) => {
+  const [isNavigator, setIsNavigator] = useState(false)
+
+  const handleNavigator = (val: boolean) => setIsNavigator(val)
+
   return (
     <Box sx={{
       height: '100vh',
       bgcolor: '#ECECEC',
       overflow: 'auto'
     }}>
-      <Header />
+      <Navigator open={isNavigator} onNavigator={handleNavigator} />
+      <Header onNavigator={handleNavigator} />
       <Container
         maxWidth='xl'
         sx={{ py: 3 }}
