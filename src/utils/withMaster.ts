@@ -42,7 +42,7 @@ const withMaster = async (
   const responses = await Promise.all(execute.map(exe => exe.request))
 
   execute.forEach((exe, index) => {
-    props[exe.type] = responses[index].body
+    props[exe.type] = responses[index]?.body || []
   })
 
   const pageProps = cb

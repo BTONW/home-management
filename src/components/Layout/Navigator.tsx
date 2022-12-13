@@ -53,8 +53,9 @@ const _menu: Menu = {
       path: '/cost-of-living/report',
       label: (
         <>
-          <Typography variant='overline'>report </Typography>
-          <Typography variant='caption'>by Date</Typography>
+          <Typography variant='overline'>report</Typography>
+          &nbsp;
+          <Typography variant='caption'>by Month</Typography>
         </>
       ),
     },
@@ -63,8 +64,9 @@ const _menu: Menu = {
       path: '/cost-of-living/search',
       label: (
         <>
-          <Typography variant='overline'>search </Typography>
-          <Typography variant='caption'>by Month</Typography>
+          <Typography variant='overline'>search</Typography>
+          &nbsp;
+          <Typography variant='caption'>by Range</Typography>
         </>
       ),
     },
@@ -73,7 +75,7 @@ const _menu: Menu = {
       path: '/cost-of-living/maintain',
       label: (
         <>
-          <Typography variant='overline'>maintain </Typography>
+          <Typography variant='overline'>maintain</Typography>
           <Typography variant='caption'>by Week</Typography>
         </>
       ),

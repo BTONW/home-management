@@ -1,4 +1,5 @@
 import { FC } from 'react'
+import { MasterTypes } from '@hm-dto/utils.dto'
 import withMaster from '@hm-utils/withMaster'
 import Module from '@hm-modules/cost-of-living/report'
 
@@ -10,6 +11,6 @@ export const getStaticProps = () => withMaster(() => Promise.resolve({
     { text: 'Cost of living', path: '/cost-of-living/report' },
     { text: 'Report' }
   ],
-}), [])
+}), [MasterTypes.BUDGETS])
 
 export default Page
